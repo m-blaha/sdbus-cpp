@@ -2,7 +2,7 @@
 # PROJECT INFORMATION
 #-------------------------------
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.12)
 
 project(sdbus-c++ VERSION 0.6.1 LANGUAGES C CXX)
 
@@ -16,12 +16,13 @@ option(BUILD_LIBSYSTEMD "Build libsystemd static library and incorporate it into
 
 if(NOT BUILD_LIBSYSTEMD)
     find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SYSTEMD libsystemd>=236)
-    if(NOT SYSTEMD_FOUND)
+    pkg_check_modules(Systemd IMPORTED_TARGET GLOBAL libsystemd>=236)
+    if(NOT TARGET PkgConfig::Systemd)
         message(FATAL_ERROR "libsystemd of version at least 236 is required, but was not found "
                             "(you may turn BUILD_LIBSYSTEMD on for sdbus-c++ to try downloading "
                             "and building libsystemd in as part of sdbus-c++ during configuration)")
     endif()
+    add_library(Systemd::Libsystemd ALIAS PkgConfig::Systemd)
 else()
     # Build static libsystemd library as an external project
     include(cmake/LibsystemdExternalProject.cmake)
@@ -81,11 +82,7 @@ set(SDBUSCPP_SRCS ${SDBUSCPP_CPP_SRCS} ${SDBUSCPP_HDR_SRCS} ${SDBUSCPP_PUBLIC_HD
 # GENERAL COMPILER CONFIGURATION
 #-------------------------------
 
-if(${CMAKE_VERSION} VERSION_LESS "3.8.0") 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-else()
-    set(CMAKE_CXX_STANDARD 17) # Supported in CMake>=3.8
-endif()
+set(CMAKE_CXX_STANDARD 17)
 
 #----------------------------------
 # LIBRARY BUILD INFORMATION
@@ -100,16 +97,16 @@ option(BUILD_SHARED_LIBS "Build shared libraries (.so) instead of static ones (.
 add_library(sdbus-c++-objlib OBJECT ${SDBUSCPP_SRCS})
 target_compile_definitions(sdbus-c++-objlib PRIVATE BUILDLIB=1)
 target_include_directories(sdbus-c++-objlib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                                                   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-                                                   $<BUILD_INTERFACE:${SYSTEMD_INCLUDE_DIRS}>)
+                                                   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 if(BUILD_SHARED_LIBS)
     set_target_properties(sdbus-c++-objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 if(BUILD_LIBSYSTEMD)
     add_dependencies(sdbus-c++-objlib LibsystemdBuildProject)
 endif()
+target_link_libraries(sdbus-c++-objlib PUBLIC Systemd::Libsystemd)
 
-add_library(sdbus-c++ $<TARGET_OBJECTS:sdbus-c++-objlib>)
+add_library(sdbus-c++)
 target_include_directories(sdbus-c++ PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 set_target_properties(sdbus-c++
@@ -117,7 +114,7 @@ set_target_properties(sdbus-c++
                                  VERSION "${SDBUSCPP_VERSION}"
                                  SOVERSION "${SDBUSCPP_VERSION_MAJOR}"
                                  OUTPUT_NAME "sdbus-c++")
-target_link_libraries(sdbus-c++ PRIVATE ${SYSTEMD_LIBRARIES})
+target_link_libraries(sdbus-c++ PRIVATE sdbus-c++-objlib)
 
 #----------------------------------
 # INSTALLATION

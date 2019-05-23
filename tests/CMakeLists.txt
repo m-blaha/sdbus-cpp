@@ -84,11 +84,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # BUILD INFORMATION
 #----------------------------------
 
-add_executable(sdbus-c++-unit-tests ${UNITTESTS_SRCS} $<TARGET_OBJECTS:sdbus-c++-objlib>)
-target_include_directories(sdbus-c++-unit-tests PRIVATE ${SYSTEMD_INCLUDE_DIRS}
-                                                        ${CMAKE_SOURCE_DIR}/src
-                                                        ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(sdbus-c++-unit-tests ${SYSTEMD_LIBRARIES} gmock gmock_main)
+add_executable(sdbus-c++-unit-tests ${UNITTESTS_SRCS})
+target_link_libraries(sdbus-c++-unit-tests sdbus-c++-objlib gmock gmock_main)
 
 add_executable(sdbus-c++-integration-tests ${INTEGRATIONTESTS_SRCS})
 target_link_libraries(sdbus-c++-integration-tests sdbus-c++ gmock gmock_main)

@@ -45,10 +45,9 @@ ExternalProject_Add(LibsystemdBuildProject
                     LOG_DOWNLOAD 1 LOG_UPDATE 1 LOG_CONFIGURE 1 LOG_BUILD 1)
 
 ExternalProject_Get_property(LibsystemdBuildProject SOURCE_DIR)
-set(SYSTEMD_INCLUDE_DIRS ${SOURCE_DIR}/src)
 ExternalProject_Get_property(LibsystemdBuildProject BINARY_DIR)
-set(SYSTEMD_LIBRARY_DIRS ${BINARY_DIR})
 
 add_library(Systemd::Libsystemd STATIC IMPORTED)
-set_target_properties(Systemd::Libsystemd PROPERTIES IMPORTED_LOCATION ${SYSTEMD_LIBRARY_DIRS}/libsystemd.a)
-set(SYSTEMD_LIBRARIES Systemd::Libsystemd ${CAP_LIBRARIES} ${GLIBC_RT_LIBRARY} ${MOUNT_LIBRARIES})
+set_target_properties(Systemd::Libsystemd PROPERTIES IMPORTED_LOCATION ${BINARY_DIR}/libsystemd.a)
+target_include_directories(Systemd::Libsystemd INTERFACE ${SOURCE_DIR}/src)
+target_link_libraries(Systemd::Libsystemd INTERFACE ${CAP_LIBRARIES} ${GLIBC_RT_LIBRARY} ${MOUNT_LIBRARIES})
