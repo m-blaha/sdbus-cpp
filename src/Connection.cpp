@@ -34,11 +34,6 @@
 #include <unistd.h>
 #include <poll.h>
 #include <sys/eventfd.h>
-#include <set>
-
-#include <unistd.h>
-#include <sys/syscall.h>
-#define gettid() syscall(SYS_gettid)
 
 namespace sdbus { namespace internal {
 
@@ -93,7 +88,7 @@ void Connection::enterProcessingLoop()
 {
     loopThreadId_ = std::this_thread::get_id();
 
-    std::lock_guard<std::mutex> guard(loopMutex_);
+    std::lock_guard guard(loopMutex_);
 
     while (true)
     {
@@ -314,7 +309,7 @@ MethodReply Connection::tryCallMethodSynchronously(const MethodCall& message, ui
         }
 
         // Synchronous D-Bus call
-        std::lock_guard<std::mutex> guard(loopMutex_, std::adopt_lock);
+        std::lock_guard guard(loopMutex_, std::adopt_lock);
         return message.send(timeout);
     }
 
@@ -325,7 +320,7 @@ MethodReply Connection::tryCallMethodSynchronously(const MethodCall& message, ui
         return message.send(timeout);
     }
 
-    return MethodReply{};
+    return {};
 }
 
 Connection::BusPtr Connection::openBus(const BusFactory& busFactory)
@@ -372,8 +367,6 @@ void Connection::joinWithProcessingLoop()
 {
     if (asyncLoopThread_.joinable())
         asyncLoopThread_.join();
-//    if (asyncLoopThread2_.joinable())
-//        asyncLoopThread2_.join();
 }
 
 bool Connection::processPendingRequest()
@@ -398,13 +391,8 @@ bool Connection::waitForNextRequest()
     struct pollfd fds[] = {{sdbusPollData.fd, sdbusPollData.events, 0}, {loopExitFd_.fd, POLLIN, 0}};
     auto fdsCount = sizeof(fds)/sizeof(fds[0]);
 
-    //printf("Thread %d: Going to poll %p\n", gettid(), this);
-
     auto timeout = sdbusPollData.timeout_usec == (uint64_t) -1 ? (uint64_t)-1 : (sdbusPollData.timeout_usec+999)/1000;
     auto r = poll(fds, fdsCount, timeout);
-    //auto r = ppoll(fds, fdsCount, nullptr, nullptr);
-
-    //printf("Thread %d: Poll woken up %p\n", gettid(), this);
 
     if (r < 0 && errno == EINTR)
         return true; // Try again
@@ -414,7 +402,6 @@ bool Connection::waitForNextRequest()
     if (fds[1].revents & POLLIN)
     {
         clearExitNotification();
-        //printf("Thread %d: Exiting %p\n", gettid(), this);
         return false;
     }
 

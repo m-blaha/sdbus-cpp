@@ -62,13 +62,12 @@ public:
     static void SetUpTestCase()
     {
         s_connection->requestName(INTERFACE_NAME);
-        m_t = std::thread([](){s_connection->enterProcessingLoop();});
+        s_connection->enterProcessingLoopAsync();
     }
 
     static void TearDownTestCase()
     {
         s_connection->leaveProcessingLoop();
-        m_t.join();
         s_connection->releaseName(INTERFACE_NAME);
     }
 
@@ -90,9 +89,7 @@ private:
     void SetUp() override
     {
         m_adaptor = std::make_unique<TestingAdaptor>(*s_connection);
-        //printf("PROXY BEGIN!\n");
         m_proxy = std::make_unique<TestingProxy>(INTERFACE_NAME, OBJECT_PATH);
-        //printf("PROXY END!\n");
         std::this_thread::sleep_for(50ms); // Give time for the proxy to start listening to signals
     }
 
@@ -107,12 +104,9 @@ public:
 
     std::unique_ptr<TestingAdaptor> m_adaptor;
     std::unique_ptr<TestingProxy> m_proxy;
-
-    static std::thread m_t;
 };
 
 std::unique_ptr<sdbus::IConnection> AdaptorAndProxyFixture::s_connection = sdbus::createSystemBusConnection();
-std::thread AdaptorAndProxyFixture::m_t;
 
 }
 

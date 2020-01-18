@@ -26,7 +26,6 @@
 
 #include "Proxy.h"
 #include "IConnection.h"
-#include "ISdBus.h"
 #include "MessageUtils.h"
 #include "sdbus-c++/Message.h"
 #include "sdbus-c++/IConnection.h"
@@ -36,12 +35,6 @@
 #include <cassert>
 #include <chrono>
 #include <thread>
-#include <future>
-#include <utility>
-
-#include <unistd.h>
-#include <sys/syscall.h>
-#define gettid() syscall(SYS_gettid)
 
 namespace sdbus { namespace internal {
 

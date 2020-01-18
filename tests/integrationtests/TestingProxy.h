@@ -30,10 +30,6 @@
 #include "proxy-glue.h"
 #include <atomic>
 
-#include <unistd.h>
-#include <sys/syscall.h>
-#define gettid() syscall(SYS_gettid)
-
 class TestingProxy : public sdbus::ProxyInterfaces< ::testing_proxy
                                                   , sdbus::Peer_proxy
                                                   , sdbus::Introspectable_proxy
