@@ -36,7 +36,6 @@
 // Forward declaration
 namespace sdbus {
     class MethodCall;
-    class AsyncMethodCall;
     class MethodReply;
     class Signal;
     namespace internal {

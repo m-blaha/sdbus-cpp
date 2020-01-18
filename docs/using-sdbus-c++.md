@@ -157,8 +157,7 @@ The following diagram illustrates the major entities in sdbus-c++.
 
 `Message` class represents a message, which is the fundamental DBus concept. There are three distinctive types of message that are derived from the `Message` class:
 
-  * `MethodCall` (with serialized parameters),
-  * `AsyncMethodCall` (with serialized parameters),
+  * `MethodCall` (be it synchronous or asynchronous method call, with serialized parameters),
   * `MethodReply` (with serialized return values),
   * `Signal` (with serialized parameters),
   * `PropertySetCall` (with serialized parameter value to be set)
@@ -176,7 +175,7 @@ sdbus-c++ is completely thread-aware by design. Though sdbus-c++ is not thread-s
 
 sdbus-c++ is designed such that all the above operations are thread-safe also on a connection that is running an event loop (usually in a separate thread) at that time. It's an internal thread safety. For example, a signal arrives and is processed by sdbus-c++ even loop at an appropriate `Proxy` instance, while the user is going to destroy that instance in their application thread. The user cannot explicitly control these situations (or they could, but that would be very limiting and cubersome on the API level).
 
-However, other combinations, that the user invokes explicitly from within more threads are NOT thread-safe in sdbus-c++ by design, and the user should make sure by their design that these cases never occur. For example, destroying an `Object` instance in one thread while emitting a signal on it in another thread is not thread-safe. In this specific case, the user should make sure in their application that all threads stop working with a specific instance before a thread proceeds with deleting an instance.
+However, other combinations, that the user invokes explicitly from within more threads are NOT thread-safe in sdbus-c++ by design, and the user should make sure by their design that these cases never occur. For example, destroying an `Object` instance in one thread while emitting a signal on it in another thread is not thread-safe. In this specific case, the user should make sure in their application that all threads stop working with a specific instance before a thread proceeds with deleting that instance.
 
 Multiple layers of sdbus-c++ API
 -------------------------------

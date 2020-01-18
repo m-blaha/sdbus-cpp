@@ -52,9 +52,8 @@ namespace internal {
              , std::string objectPath );
 
         MethodCall createMethodCall(const std::string& interfaceName, const std::string& methodName) override;
-        AsyncMethodCall createAsyncMethodCall(const std::string& interfaceName, const std::string& methodName) override;
         MethodReply callMethod(const MethodCall& message, uint64_t timeout) override;
-        void callMethod(const AsyncMethodCall& message, async_reply_handler asyncReplyCallback, uint64_t timeout) override;
+        void callMethod(const MethodCall& message, async_reply_handler asyncReplyCallback, uint64_t timeout) override;
 
         void registerSignalHandler( const std::string& interfaceName
                                   , const std::string& signalName
@@ -63,12 +62,23 @@ namespace internal {
         void unregister() override;
 
     private:
-        struct SyncCallReplyData;
-        static SyncCallReplyData& getSyncCallReplyData();
-        MethodReply callMethodWithAsyncReplyBlocking(const MethodCall& message, uint64_t timeout);
+        class SyncCallReplyData
+        {
+        public:
+            void sendMethodReplyToWaitingThread(MethodReply& reply, const Error* error);
+            MethodReply waitForMethodReply();
+
+        private:
+            std::mutex mutex_;
+            std::condition_variable cond_;
+            bool arrived_{};
+            MethodReply reply_;
+            std::unique_ptr<Error> error_;
+        };
+
+        MethodReply sendMethodCallMessageAndWaitForReply(const MethodCall& message, uint64_t timeout);
         void registerSignalHandlers(sdbus::internal::IConnection& connection);
         static int sdbus_async_reply_handler(sd_bus_message *sdbusMessage, void *userData, sd_bus_error *retError);
-        static int sdbus_sync_reply_handler(sd_bus_message *sdbusMessage, void *userData, sd_bus_error *retError);
         static int sdbus_signal_handler(sd_bus_message *sdbusMessage, void *userData, sd_bus_error *retError);
 
     private:
@@ -102,7 +112,7 @@ namespace internal {
             {
                 Proxy& proxy;
                 async_reply_handler callback;
-                AsyncMethodCall::Slot slot;
+                MethodCall::Slot slot;
             };
 
             ~AsyncCalls()
@@ -135,15 +145,6 @@ namespace internal {
             std::unordered_map<void*, std::unique_ptr<CallData>> calls_;
             std::mutex mutex_;
         } pendingAsyncCalls_;
-
-        struct SyncCallReplyData
-        {
-            std::mutex mutex;
-            std::condition_variable cond;
-            bool arrived{};
-            MethodReply reply;
-            std::unique_ptr<Error> error;
-        };
     };
 
 }}

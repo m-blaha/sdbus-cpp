@@ -652,20 +652,28 @@ MethodReply MethodCall::sendWithReply(uint64_t timeout) const
     return Factory::create<MethodReply>(sdbusReply, sdbus_, adopt_message);
 }
 
-// TODO: Consider merging MethodCall with AsyncMethodCall  (provide owning boolean parameter for no Slot),
-// return sendWithReply and sendWithNoReply back as private methods.
-void MethodCall::sendWithAsyncReply(void* callback, void* userData, uint64_t timeout) const
-{
-    auto r = sdbus_->sd_bus_call_async(nullptr, nullptr, (sd_bus_message*)msg_, (sd_bus_message_handler_t)callback, userData, timeout);
-    SDBUS_THROW_ERROR_IF(r < 0, "Failed to call method with asynchronous reply", -r);
-}
-
 MethodReply MethodCall::sendWithNoReply() const
 {
     auto r = sdbus_->sd_bus_send(nullptr, (sd_bus_message*)msg_, nullptr);
     SDBUS_THROW_ERROR_IF(r < 0, "Failed to call method with no reply", -r);
 
     return Factory::create<MethodReply>(); // No reply
+}
+
+void MethodCall::send(void* callback, void* userData, uint64_t timeout, dont_request_slot_t) const
+{
+    auto r = sdbus_->sd_bus_call_async(nullptr, nullptr, (sd_bus_message*)msg_, (sd_bus_message_handler_t)callback, userData, timeout);
+    SDBUS_THROW_ERROR_IF(r < 0, "Failed to call method", -r);
+}
+
+MethodCall::Slot MethodCall::send(void* callback, void* userData, uint64_t timeout) const
+{
+    sd_bus_slot* slot;
+
+    auto r = sdbus_->sd_bus_call_async(nullptr, &slot, (sd_bus_message*)msg_, (sd_bus_message_handler_t)callback, userData, timeout);
+    SDBUS_THROW_ERROR_IF(r < 0, "Failed to call method asynchronously", -r);
+
+    return Slot{slot, [sdbus_ = sdbus_](void *slot){ sdbus_->sd_bus_slot_unref((sd_bus_slot*)slot); }};
 }
 
 MethodReply MethodCall::createReply() const
@@ -688,21 +696,6 @@ MethodReply MethodCall::createErrorReply(const Error& error) const
     SDBUS_THROW_ERROR_IF(r < 0, "Failed to create method error reply", -r);
 
     return Factory::create<MethodReply>(sdbusErrorReply, sdbus_, adopt_message);
-}
-
-AsyncMethodCall::AsyncMethodCall(MethodCall&& call) noexcept
-    : Message(std::move(call))
-{
-}
-
-AsyncMethodCall::Slot AsyncMethodCall::send(void* callback, void* userData, uint64_t timeout) const
-{
-    sd_bus_slot* slot;
-
-    auto r = sdbus_->sd_bus_call_async(nullptr, &slot, (sd_bus_message*)msg_, (sd_bus_message_handler_t)callback, userData, timeout);
-    SDBUS_THROW_ERROR_IF(r < 0, "Failed to call method asynchronously", -r);
-
-    return Slot{slot, [sdbus_ = sdbus_](void *slot){ sdbus_->sd_bus_slot_unref((sd_bus_slot*)slot); }};
 }
 
 void MethodReply::send() const
