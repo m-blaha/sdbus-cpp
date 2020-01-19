@@ -243,6 +243,8 @@ R"delimiter(<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspectio
   <method name="doPrivilegedStuff">
    <annotation name="org.freedesktop.systemd1.Privileged" value="true"/>
   </method>
+  <method name="emitTwoSimpleSignals">
+  </method>
   <method name="getComplex">
    <arg type="a{t(a{ya(obva{is})}gs)}" direction="out"/>
    <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
