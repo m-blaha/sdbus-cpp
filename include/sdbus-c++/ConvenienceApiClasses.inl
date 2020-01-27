@@ -70,7 +70,14 @@ namespace sdbus {
         // Therefore, we can allow registerMethod() to throw even if we are in the destructor.
         // Bottomline is, to be on the safe side, the caller must take care of catching and reacting
         // to the exception thrown from here if the caller is a destructor itself.
-        object_.registerMethod(interfaceName_, methodName_, inputSignature_, outputSignature_, std::move(methodCallback_), flags_);
+        object_.registerMethod( interfaceName_
+                              , std::move(methodName_)
+                              , std::move(inputSignature_)
+                              , std::move(inputParamNames_)
+                              , std::move(outputSignature_)
+                              , std::move(outputParamNames_)
+                              , std::move(methodCallback_)
+                              , std::move(flags_));
     }
 
     inline MethodRegistrator& MethodRegistrator::onInterface(std::string interfaceName)
@@ -130,6 +137,20 @@ namespace sdbus {
         return *this;
     }
 
+    inline MethodRegistrator& MethodRegistrator::withInputParamNames(std::vector<std::string> paramNames)
+    {
+        inputParamNames_ = std::move(paramNames);
+
+        return *this;
+    }
+
+    inline MethodRegistrator& MethodRegistrator::withOutputParamNames(std::vector<std::string> paramNames)
+    {
+        outputParamNames_ = std::move(paramNames);
+
+        return *this;
+    }
+
     inline MethodRegistrator& MethodRegistrator::markAsDeprecated()
     {
         flags_.set(Flags::DEPRECATED);
@@ -179,7 +200,11 @@ namespace sdbus {
         // Therefore, we can allow registerSignal() to throw even if we are in the destructor.
         // Bottomline is, to be on the safe side, the caller must take care of catching and reacting
         // to the exception thrown from here if the caller is a destructor itself.
-        object_.registerSignal(interfaceName_, signalName_, signalSignature_, flags_);
+        object_.registerSignal( interfaceName_
+                              , std::move(signalName_)
+                              , std::move(signalSignature_)
+                              , std::move(paramNames_)
+                              , std::move(flags_) );
     }
 
     inline SignalRegistrator& SignalRegistrator::onInterface(std::string interfaceName)
@@ -193,6 +218,15 @@ namespace sdbus {
     inline SignalRegistrator& SignalRegistrator::withParameters()
     {
         signalSignature_ = signature_of_function_input_arguments<void(_Args...)>::str();
+
+        return *this;
+    }
+    
+    template <typename... _Args>
+    inline SignalRegistrator& SignalRegistrator::withParameters(std::vector<std::string> paramNames)
+    {
+        withParameters<_Args...>();
+        paramNames_ = std::move(paramNames);
 
         return *this;
     }

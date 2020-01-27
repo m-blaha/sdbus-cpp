@@ -31,6 +31,7 @@
 #include <sdbus-c++/TypeTraits.h>
 #include <sdbus-c++/Flags.h>
 #include <string>
+#include <vector>
 #include <type_traits>
 #include <chrono>
 #include <cstdint>
@@ -57,7 +58,6 @@ namespace sdbus {
         std::enable_if_t<!is_async_method_v<_Function>, MethodRegistrator&> implementedAs(_Function&& callback);
         template <typename _Function>
         std::enable_if_t<is_async_method_v<_Function>, MethodRegistrator&> implementedAs(_Function&& callback);
-        // TODO: Continue
         MethodRegistrator& withInputParamNames(std::vector<std::string> paramNames);
         MethodRegistrator& withOutputParamNames(std::vector<std::string> paramNames);
         MethodRegistrator& markAsDeprecated();
@@ -86,6 +86,7 @@ namespace sdbus {
 
         SignalRegistrator& onInterface(std::string interfaceName);
         template <typename... _Args> SignalRegistrator& withParameters();
+        template <typename... _Args> SignalRegistrator& withParameters(std::vector<std::string> paramNames);
         SignalRegistrator& markAsDeprecated();
 
     private:
@@ -93,6 +94,7 @@ namespace sdbus {
         const std::string& signalName_;
         std::string interfaceName_;
         std::string signalSignature_;
+        std::vector<std::string> paramNames_;
         Flags flags_;
         int exceptions_{}; // Number of active exceptions when SignalRegistrator is constructed
     };
