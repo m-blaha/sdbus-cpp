@@ -57,6 +57,9 @@ namespace sdbus {
         std::enable_if_t<!is_async_method_v<_Function>, MethodRegistrator&> implementedAs(_Function&& callback);
         template <typename _Function>
         std::enable_if_t<is_async_method_v<_Function>, MethodRegistrator&> implementedAs(_Function&& callback);
+        // TODO: Continue
+        MethodRegistrator& withInputParamNames(std::vector<std::string> paramNames);
+        MethodRegistrator& withOutputParamNames(std::vector<std::string> paramNames);
         MethodRegistrator& markAsDeprecated();
         MethodRegistrator& markAsPrivileged();
         MethodRegistrator& withNoReply();
@@ -66,7 +69,9 @@ namespace sdbus {
         const std::string& methodName_;
         std::string interfaceName_;
         std::string inputSignature_;
+        std::vector<std::string> inputParamNames_;
         std::string outputSignature_;
+        std::vector<std::string> outputParamNames_;
         method_callback methodCallback_;
         Flags flags_;
         int exceptions_{}; // Number of active exceptions when SignalRegistrator is constructed
