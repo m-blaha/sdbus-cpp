@@ -46,6 +46,9 @@ namespace sdbus {
 
 namespace sdbus {
 
+    template <typename... _Args>
+    inline constexpr bool are_strings_v = std::conjunction<std::is_convertible<_Args, std::string>...>::value;
+
     class MethodRegistrator
     {
     public:
@@ -59,7 +62,11 @@ namespace sdbus {
         template <typename _Function>
         std::enable_if_t<is_async_method_v<_Function>, MethodRegistrator&> implementedAs(_Function&& callback);
         MethodRegistrator& withInputParamNames(std::vector<std::string> paramNames);
+        template <typename... _String>
+        std::enable_if_t<are_strings_v<_String...>, MethodRegistrator&> withInputParamNames(_String... paramNames);
         MethodRegistrator& withOutputParamNames(std::vector<std::string> paramNames);
+        template <typename... _String>
+        std::enable_if_t<are_strings_v<_String...>, MethodRegistrator&> withOutputParamNames(_String... paramNames);
         MethodRegistrator& markAsDeprecated();
         MethodRegistrator& markAsPrivileged();
         MethodRegistrator& withNoReply();
@@ -87,6 +94,8 @@ namespace sdbus {
         SignalRegistrator& onInterface(std::string interfaceName);
         template <typename... _Args> SignalRegistrator& withParameters();
         template <typename... _Args> SignalRegistrator& withParameters(std::vector<std::string> paramNames);
+        template <typename... _Args, typename... _String>
+        std::enable_if_t<are_strings_v<_String...>, SignalRegistrator&> withParameters(_String... paramNames);
         SignalRegistrator& markAsDeprecated();
 
     private:

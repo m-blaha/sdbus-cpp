@@ -301,7 +301,7 @@ std::string Object::paramNamesToString(const std::vector<std::string>& paramName
 {
     std::string names;
     for (const auto& name : paramNames)
-        names += name + "\0";
+        names += name + '\0';
     return names;
 }
 

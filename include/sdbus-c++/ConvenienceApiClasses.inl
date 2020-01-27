@@ -88,7 +88,8 @@ namespace sdbus {
     }
 
     template <typename _Function>
-    inline std::enable_if_t<!is_async_method_v<_Function>, MethodRegistrator&> MethodRegistrator::implementedAs(_Function&& callback)
+    inline std::enable_if_t<!is_async_method_v<_Function>, MethodRegistrator&>
+    MethodRegistrator::implementedAs(_Function&& callback)
     {
         inputSignature_ = signature_of_function_input_arguments<_Function>::str();
         outputSignature_ = signature_of_function_output_arguments<_Function>::str();
@@ -117,7 +118,8 @@ namespace sdbus {
     }
 
     template <typename _Function>
-    inline std::enable_if_t<is_async_method_v<_Function>, MethodRegistrator&> MethodRegistrator::implementedAs(_Function&& callback)
+    inline std::enable_if_t<is_async_method_v<_Function>, MethodRegistrator&>
+    MethodRegistrator::implementedAs(_Function&& callback)
     {
         inputSignature_ = signature_of_function_input_arguments<_Function>::str();
         outputSignature_ = signature_of_function_output_arguments<_Function>::str();
@@ -144,11 +146,23 @@ namespace sdbus {
         return *this;
     }
 
+    template <typename... _String>
+    inline std::enable_if_t<are_strings_v<_String...>, MethodRegistrator&> MethodRegistrator::withInputParamNames(_String... paramNames)
+    {
+        return withInputParamNames({paramNames...});
+    }
+
     inline MethodRegistrator& MethodRegistrator::withOutputParamNames(std::vector<std::string> paramNames)
     {
         outputParamNames_ = std::move(paramNames);
 
         return *this;
+    }
+
+    template <typename... _String>
+    inline std::enable_if_t<are_strings_v<_String...>, MethodRegistrator&> MethodRegistrator::withOutputParamNames(_String... paramNames)
+    {
+        return withOutputParamNames({paramNames...});
     }
 
     inline MethodRegistrator& MethodRegistrator::markAsDeprecated()
@@ -221,14 +235,22 @@ namespace sdbus {
 
         return *this;
     }
-    
+
     template <typename... _Args>
     inline SignalRegistrator& SignalRegistrator::withParameters(std::vector<std::string> paramNames)
     {
-        withParameters<_Args...>();
         paramNames_ = std::move(paramNames);
 
-        return *this;
+        return withParameters<_Args...>();
+    }
+
+    template <typename... _Args, typename... _String>
+    inline std::enable_if_t<are_strings_v<_String...>, SignalRegistrator&>
+    SignalRegistrator::withParameters(_String... paramNames)
+    {
+        static_assert(sizeof...(_Args) == sizeof...(_String), "Numbers of signal parameters and their names don't match");
+
+        return withParameters<_Args...>({paramNames...});
     }
 
     inline SignalRegistrator& SignalRegistrator::markAsDeprecated()
